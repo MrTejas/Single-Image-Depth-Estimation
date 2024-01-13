@@ -1,0 +1,79 @@
+clear
+clc
+
+for InputNo=1:N
+    
+end
+
+
+%% 读入原始图像
+OriginalColorImage=imread('E:\Tangchang\图像处理\Saliency Detection\Code\Spectral Residual\ImageData\dahua\dahua.jpg');
+inImg = im2double(rgb2gray(OriginalColorImage));
+% inImg = imresize(inImg, 64/size(inImg, 2));
+GrayImage=rgb2gray(OriginalColorImage);   %灰度处理
+
+[M,N]=size(GrayImage);
+
+OriginalEdge=edge(GrayImage,'canny',0.05);  % 调用canny函数进行边缘检测   对源图像
+% figure(1),imshow(OriginalEdge);  % 显示边缘
+
+% title('源图像的边缘');
+
+%% Spectral Residual
+myFFT = fft2(inImg);
+myLogAmplitude = log(abs(myFFT));
+myPhase = angle(myFFT);
+mySpectralResidual = myLogAmplitude - imfilter(myLogAmplitude, fspecial('average', 3), 'replicate');
+SparseDepth = abs(ifft2(exp(mySpectralResidual + i*myPhase))).^2;
+
+%% 对频率残差进行因子处理
+SparseDepth = 50*mat2gray(imfilter(SparseDepth, fspecial('gaussian', [10, 10], 2.5)));
+
+for i=1:M
+    for j=1:N
+        if OriginalEdge(i,j)==1
+            SparseDepth(i,j)=SparseDepth(i,j);    %该处修改深度图的值域范围
+        else
+            SparseDepth(i,j)=0;
+        end
+    end
+end
+
+imwrite(SparseDepth,'InitialResidualDepth.bmp','bmp');
+SparseDepth=BilateralFilter(SparseDepth,OriginalColorImage);
+imwrite(SparseDepth,'ResidualBilateralFilteredDepthMap.bmp','bmp');    %此处的到的是边缘深度图
+figure(1),imshow(SparseDepth);
+
+%%  形成scrible图片 （将边缘深度信息加入到原来彩色图片的过程）
+Rbird=OriginalColorImage(:,:,1);
+Gbird=OriginalColorImage(:,:,2);
+Bbird=OriginalColorImage(:,:,3);
+
+SparseDepth=im2uint8(SparseDepth);  %此处需要将DepthMap转化为uint8类型的
+RSparsebird=SparseDepth;
+GSparsebird=SparseDepth;
+BSparsebird=SparseDepth;
+
+[m n]=size(Rbird);
+for j=1:m
+    for i=1:n
+        if RSparsebird(j,i)~=0
+            Rbird(j,i)=RSparsebird(j,i);
+            Gbird(j,i)=GSparsebird(j,i);
+            Bbird(j,i)=BSparsebird(j,i);
+        end
+            
+    end
+end
+Scrible(:,:,1)=Rbird;
+Scrible(:,:,2)=Gbird;
+Scrible(:,:,3)=Bbird;
+
+imwrite(Scrible,'My-Residual-yujinxiang-scrible.bmp','bmp');   %记录Scrible图像
+figure(2),imshow(Scrible);
+
+%%  深度图 propagation过程
+levels_num=1;   %1
+active_levels_num=1;   %1
+sig=0.1^6;
+runMatting

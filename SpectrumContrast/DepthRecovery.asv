@@ -1,0 +1,52 @@
+clear;
+% img_name='Flower-color-small.bmp';
+% scribs_img_name='Flower-small-scrible.bmp';
+% 
+% % % img_name='cuiniao.bmp';
+% % % scribs_img_name='Flower-big-scrible.bmp';
+% 
+% % 
+% % % % %截取图片
+% 
+ColorImage=imread('E:\Tangchang\图像处理\Saliency Detection\Code\Spectral Residual\ImageData\yujinxiang\yujinxiang.jpg');
+SparseImage=imread('E:\Tangchang\图像处理\Saliency Detection\Code\Spectral Residual\ImageData\yujinxiang\yujinxiang-Residual-SparseDepthMapx50.bmp');
+% Colorcat=ColorImage(251:600,201:700,:);   %前面为竖向方向，后面为横向方向
+% imwrite(Colorcat,'Flower-color-small.bmp','bmp');
+% Sparsecat=SparseImage(251:600,201:700,:);
+
+ColorBird=ColorImage;                %将边缘深度信息加入到原来彩色图片的过程
+Rbird=ColorBird(:,:,1);
+Gbird=ColorBird(:,:,2);
+Bbird=ColorBird(:,:,3);
+
+SparseBird=SparseImage;
+
+RSparsebird=SparseBird;
+GSparsebird=SparseBird;
+BSparsebird=SparseBird;
+
+[m n]=size(Rbird);
+for j=1:m
+    for i=1:n
+        if RSparsebird(j,i)~=0
+            Rbird(j,i)=RSparsebird(j,i);
+            Gbird(j,i)=GSparsebird(j,i);
+            Bbird(j,i)=BSparsebird(j,i);
+        end
+            
+    end
+end
+ColorBird(:,:,1)=Rbird;
+ColorBird(:,:,2)=Gbird;
+ColorBird(:,:,3)=Bbird;
+imwrite(ColorBird,'My-Residual-yujinxiang-scrible.bmp','bmp');
+
+imshow(ColorBird);
+
+
+levels_num=1;   %1
+active_levels_num=1;   %1
+
+sig=0.1^6;
+
+runMatting
